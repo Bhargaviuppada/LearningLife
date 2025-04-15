@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login - Learning Life</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #243B55, #141E30);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-box {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      width: 350px;
+    }
+    h2 {
+      margin-bottom: 25px;
+      font-size: 28px;
+      letter-spacing: 1px;
+    }
+    input[type="text"], input[type="password"] {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+    button {
+      background-color: #00C9A7;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #00b195;
+    }
+    .back-link {
+      display: block;
+      margin-top: 20px;
+      color: #ccc;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <form action="/adminlogin" method="POST">
+      <input type="text" name="username" placeholder="Admin Name" required><br>
+      <input type="password" name="password" placeholder="Password" required><br>
+      <button type="submit">Login</button>
+    </form>
+    <a href="/home" class="back-link">← Back to Home</a>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Learning Life</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      background: black;
+    }
+
+    .video-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      min-width: 100%;
+      min-height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 100px auto;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 36px;
+      margin-bottom: 10px;
+      color: greenyellow;
+    }
+
+    p {
+      color: yellow;
+      margin-bottom: 30px;
+    }
+
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 6px;
+      background: #f1f1f1;
+      color: #333;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #3498db;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #2471a3;
+    }
+
+    a {
+      color: #9ce8ff;
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+ 
+  
+  <video autoplay muted loop playsinline class="video-bg">
+    <source src="/video1.mp4" type="video/mp4">
+  </video>
+
+  <div class="container">
+    <h1>Learning Life</h1>
+    <p>Login to your account</p>
+
+    <form action="/login" method="POST">
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+
+    <p style="margin-top: 20px;">Don't have an account? <a href="/register">Register here</a></p>
+  </div>
+</body>
+</html>

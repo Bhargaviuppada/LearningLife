@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enrolled Courses - LearningLife</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #333;
+      color: white;
+      padding: 15px 30px;
+      text-align: center;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    .course {
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      background: #fafafa;
+    }
+    .course img {
+      width: 150px;
+      height: 100px;
+      object-fit: cover;
+      margin-right: 20px;
+      border-radius: 4px;
+    }
+    .course-details {
+      flex: 1;
+    }
+    .course-details h3 {
+      margin: 0 0 10px;
+    }
+    .status {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>My Enrolled Courses</h1>
+</header>
+
+<div class="container">
+  <h2>Welcome</h2>
+
+  <!-- Repeat this block for each enrolled course -->
+  <div class="course">
+    
+    <div class="course-details">
+      <h3>Course Title</h3>
+      <p>Duration: 3 weeks</p>
+      <p>Status: <span class="status">In Progress</span></p>
+    </div>
+  </div>
+  <!-- End course block -->
+
+</div>
+
+</body>
+</html>

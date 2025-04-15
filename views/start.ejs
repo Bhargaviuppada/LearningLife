@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= course.name %> - Video</title>
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: lightblue;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    video {
+      width: 80%;
+      max-width: 800px;
+      margin-top: 20px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Start Course: <%= course.name %></h1>
+
+  <% if (course.videos.length > 0) { %>
+    <div>
+      <% course.videos.forEach((video, index) => { %>
+        <div>
+          <h3>Video <%= index + 1 %></h3>
+          <video width="600" controls>
+            <source src="/uploads/<%= video %>" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      <% }); %>
+    </div>
+  <% } else { %>
+    <p>No videos available for this course.</p>
+  <% } %>
+
+</body>
+
+
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LearnHub - Home</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+      position: relative;
+      z-index: 0;
+    }
+
+    .video-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      min-width: 100%;
+      min-height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    header {
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 30px 20px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(92, 91, 91, 0.148);
+    }
+
+    header h1 {
+      font-size: 40px;
+      margin: 0 0 10px;
+      letter-spacing: 1px;
+      font-family: 'Dancing Script', cursive;
+      color: black;
+    }
+
+    header p {
+      font-size: 17px;
+      margin: 0;
+      opacity: 0.9;
+      font-weight: bold;
+      color: blue;
+    }
+
+    .sidebar {
+      position: absolute;
+      top: 130px;
+      left: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      width: 140px;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar a.profile,
+    .sidebar a.courses,
+    .sidebar a.admin {
+      background-color: #548f46;
+      color: #fff;
+    }
+
+    .sidebar a.profile:hover,
+    .sidebar a.courses:hover,
+    .sidebar a.admin:hover {
+      background-color: #216a9c;
+      transform: translateX(5px);
+    }
+
+    .sidebar a.logout {
+      background-color: #c0392b;
+      color: #fff;
+    }
+
+    .sidebar a.logout:hover {
+      background-color: #992d22;
+      transform: translateX(5px);
+    }
+
+    section {
+      padding: 50px 30px;
+      text-align: center;
+      background-color: rgba(10, 20, 30, 0.6);
+      backdrop-filter: blur(6px);
+      margin: 60px auto;
+      max-width: 850px;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    section h2 {
+      font-size: 30px;
+      margin-bottom: 20px;
+    }
+
+    section p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #f1f1f1;
+    }
+
+    footer {
+      background-color: rgba(24, 34, 54, 0.85);
+      color: #ddd;
+      padding: 12px;
+      text-align: center;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      font-size: 14px;
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    @media screen and (max-width: 768px) {
+      .sidebar {
+        position: static;
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+        padding: 10px;
+      }
+
+      .sidebar a {
+        margin: 5px;
+      }
+
+      section {
+        margin: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Video -->
+  <video autoplay muted loop playsinline class="video-bg">
+    <source src="video1.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <header>
+    <h2 style="color: white;">Welcome to </h2>
+     <br><h1 style="color: greenyellow;">Learning Life</h1>
+    <p style="color: rgb(240, 237, 18);">Where Curiosity Becomes Confidence.</p>
+  </header>
+
+  <div class="sidebar">
+    <a href="profile.html" class="profile">Profile</a>
+    <a href="/courses" class="courses">Courses</a>
+    <a href="/admin" class="admin">Admin</a>
+    <a href="/logout" class="logout">Logout</a>
+  </div>
+
+  <section>
+    <h2>Explore Your Path</h2>
+    <p>Discover a wide range of courses, track your progress, and connect with a community of learners. Learning Life is your personalized hub for knowledge and growth.</p>
+  </section>
+
+  <footer>
+    &copy; 2025 Learning Life. All rights reserved.
+  </footer>
+
+</body>
+</html>
+
+

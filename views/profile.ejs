@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile - Learning Life</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet">
+  <style>
+   body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-image: url('/image7.jpg'); /* Correct way to specify image */
+  background-size: cover; /* Makes the image cover the whole screen */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  margin: 0;
+  padding: 0;
+}
+
+    h1 {
+      font-family: 'Dancing Script', cursive;
+      color: #ffbf00;
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .profile-container {
+      background:rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      color: #3498db;
+      font-size: 28px;
+      margin-bottom: 15px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      background: #2c3e50;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+
+    li span {
+      color: #fff;
+    }
+
+    a {
+      text-decoration: none;
+      color: #3498db;
+      font-size: 18px;
+      margin-top: 20px;
+      display: inline-block;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-container">
+    <h1>Welcome, <%= user.name %></h1>
+    <p style="color: white;">Email: <%= user.email %></p>
+
+    <h2>Enrolled Courses:</h2>
+    <ul>
+      <% if (user.enrolledCourses && user.enrolledCourses.length > 0) { %>
+        <% user.enrolledCourses.forEach(course => { %>
+          <li>
+            <span><%= course.name %></span> - <span><%= course.timeRequired %></span>
+          </li>
+        <% }) %>
+      <% } else { %>
+        <li>No courses enrolled yet.</li>
+      <% } %>
+    </ul>
+    
+    
+
+    <a href="/home">Back to Home</a>
+  </div>
+</body>
+</html>

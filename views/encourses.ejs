@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enrolled Courses - Learning Life</title>
+  <style>
+   body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-image: url('/image8.jpg'); /* Correct way to specify image */
+  background-size: cover; /* Makes the image cover the whole screen */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  margin: 0;
+  padding: 0;
+}
+
+    .container {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 30px;
+    
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color:white;
+    }
+
+    .course-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .course-item {
+      width: 30%;
+      margin-bottom: 30px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 15px;
+    }
+
+    .course-item img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .course-item h3 {
+      margin: 10px 0;
+      color: #333;
+    }
+
+    .course-item p {
+      color: #555;
+      font-size: 14px;
+    }
+
+    .status-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .status-btn:hover {
+      background-color: #218838;
+    }
+
+    .no-courses {
+      text-align: center;
+      font-size: 18px;
+      color: #888;
+      width: 100%;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Your Enrolled Courses</h1>
+
+    <div class="course-list">
+      <% if (enrolledCourses.length === 0) { %>
+        <div class="no-courses">
+          You have not enrolled in any courses yet.
+        </div>
+      <% } else { %>
+        <% enrolledCourses.forEach(course => { %>
+          <div class="course-item">
+            <% if (course.image) { %>
+              <img src="/uploads/<%= course.image %>" alt="<%= course.name %>">
+            <% } %>
+            <h3><%= course.name %></h3>
+            <p><strong>Duration:</strong> <%= course.timeRequired %></p>
+            <!-- Optional status placeholder -->
+            <p><strong>Status:</strong> In Progress</p>
+            
+            <form action="/start-course/<%= course._id %>" method="GET">
+              <button type="submit" class="status-btn">Start Course</button>
+            </form>
+            
+            
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </div>
+
+</body>
+</html>

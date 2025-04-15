@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Courses - Learning Life</title>
+  <style>
+  body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-image: url('/image6.jpg'); /* Correct way to specify image */
+  background-size: cover; /* Makes the image cover the whole screen */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents the image from repeating */
+  margin: 0;
+  padding: 0;
+}
+
+
+    .container {
+      max-width: 1000px;
+      margin: 60px auto;
+      padding: 30px;
+    
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color:white;
+    }
+
+    .course-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    .course-item {
+      width: 30%;
+      margin-bottom: 30px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .course-item img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+    }
+
+    .course-item .course-details {
+      padding: 15px;
+    }
+
+    .course-item h3 {
+      margin: 10px 0;
+      color: #333;
+    }
+
+    .course-item p {
+      color: #555;
+      font-size: 14px;
+    }
+
+    .enroll-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .enroll-btn:hover {
+      background-color: #0056b3;
+    }
+
+    video {
+      width: 100%;
+      max-height: 300px;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Available Courses</h1>
+
+    <div class="course-list">
+      <% courses.forEach(course => { %>
+        <div class="course-item">
+          <img src="/uploads/<%= course.image %>" alt="<%= course.name %>">
+          <div class="course-details">
+            <h3><%= course.name %></h3>
+            <p><strong>Duration:</strong> <%= course.timeRequired %></p>
+
+            <h4>Videos:</h4>
+            <% course.videos.forEach(video => { %>
+              <video controls>
+                <source src="/uploads/<%= video %>" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            <% }); %>
+
+            <form action="/enroll/<%= course._id %>" method="POST">
+              <button type="submit" class="enroll-btn">Enroll</button>
+            </form>
+            
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+
+</body>
+</html>
+
+
+
