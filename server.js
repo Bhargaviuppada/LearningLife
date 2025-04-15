@@ -23,12 +23,10 @@ app.use(session({
 }));
 
 // Connect to MongoDB Atlas using connection string from .env
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Atlas connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
+
 
 // Multer setup for uploads
 const storage = multer.diskStorage({
