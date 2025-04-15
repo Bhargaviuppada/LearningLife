@@ -6,6 +6,7 @@ const multer = require('multer');
 const fs = require('fs');
 const User = require('./models/user');
 const Course = require('./models/course');
+require('dotenv').config();  // Load environment variables from .env
 
 const app = express();
 
@@ -19,10 +20,13 @@ app.use(session({
   saveUninitialized: false
 }));
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/learningLife')
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB Atlas using connection string from .env
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+  .then(() => console.log('✅ MongoDB Atlas connected'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Multer setup for uploads
 const storage = multer.diskStorage({
@@ -49,7 +53,6 @@ app.get('/', (req, res) => {
 app.get('/register', (req, res) => {
   res.render('register');
 });
-
 
 app.post('/register', (req, res) => {
   const { name, email, password } = req.body;
@@ -101,8 +104,6 @@ app.get('/profile', (req, res) => {
       res.status(500).send("Error loading user profile");
     });
 });
-
-
 
 // Admin Login
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin123' };
@@ -238,6 +239,8 @@ app.post('/start-course/:courseId', (req, res) => {
     .then(() => res.redirect('/encourses'))
     .catch(err => res.status(500).send("Error starting course"));
 });
+
+// View course
 app.get('/start-course/:courseId', async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
@@ -245,7 +248,6 @@ app.get('/start-course/:courseId', async (req, res) => {
       return res.status(404).send('Course not found');
     }
 
-    // Assuming the course has a "videos" field
     if (course.videos.length > 0) {
       res.render('start', { course });
     } else {
@@ -256,17 +258,18 @@ app.get('/start-course/:courseId', async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
+
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.render('logout'); // Renders logout.ejs
   });
 });
 
-
 // Start the server
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
+
 
 
 
