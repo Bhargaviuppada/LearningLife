@@ -74,7 +74,6 @@ app.get('/login', (req, res) => {
 });
 
 
-
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -82,12 +81,13 @@ app.post('/login', (req, res) => {
     .then(user => {
       if (!user) return res.send('Invalid email or password');
 
-      // Use bcrypt to compare entered password with hashed one
+      console.log('Entered:', password, 'Saved:', user.password); // Debugging line
+
+      // Compare entered password with hashed password
       bcrypt.compare(password, user.password, (err, isMatch) => {
-        if (err) return res.send('Error during login');
+        if (err) return res.send('Error comparing passwords');
         if (!isMatch) return res.send('Invalid email or password');
 
-        // Password matched
         req.session.user = user;
         req.session.userId = user._id;
         res.redirect('/home');
