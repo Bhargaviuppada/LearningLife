@@ -97,16 +97,6 @@ app.post('/login', (req, res) => {
     })
     .catch(err => res.send('Error during login: ' + err));
 });
-user.comparePassword(password)
-  .then(isMatch => {
-    console.log('Password match:', isMatch); // Add a log to check if the passwords match
-    if (!isMatch) return res.send('Invalid email or password');
-
-    req.session.user = user;
-    req.session.userId = user._id;
-    res.redirect('/home');
-  })
-  .catch(err => res.send('Error comparing passwords: ' + err));
 
 // Home
 app.get('/home', (req, res) => {
