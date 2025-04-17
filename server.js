@@ -145,39 +145,52 @@ app.get('/admincourse', (req, res) => {
 });
 
 // Admin - Add course POST
+// Convert buffer to base64
+function bufferToBase64(buffer) {
+  return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+}
+
+// Admin - Add course POST
 app.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
 ]), async (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
 
-  const { name, timeRequired } = req.body;
-  
-  // Upload image to Cloudinary
-  const imageUpload = await cloudinary.uploader.upload(req.files['image'][0].buffer, {
-    folder: 'courses/images',
-    resource_type: 'image'
-  }).catch(err => res.status(500).send('Error uploading image: ' + err));
+  try {
+    const { name, timeRequired } = req.body;
 
-  // Upload videos to Cloudinary
-  const videoUploads = await Promise.all(req.files['videos'].map(file =>
-    cloudinary.uploader.upload(file.buffer, {
-      folder: 'courses/videos',
-      resource_type: 'video'
-    })
-  )).catch(err => res.status(500).send('Error uploading videos: ' + err));
+    // Upload image to Cloudinary
+    const imageBase64 = bufferToBase64(req.files['image'][0].buffer);
+    const imageUpload = await cloudinary.uploader.upload(imageBase64, {
+      folder: 'courses/images',
+      resource_type: 'image'
+    });
 
-  const newCourse = new Course({
-    name,
-    timeRequired,
-    image: imageUpload?.secure_url,
-    videos: videoUploads.map(upload => upload.secure_url)
-  });
+    // Upload videos to Cloudinary
+    const videoUploads = await Promise.all(req.files['videos'].map(file => {
+      const videoBase64 = `data:video/mp4;base64,${file.buffer.toString('base64')}`;
+      return cloudinary.uploader.upload(videoBase64, {
+        folder: 'courses/videos',
+        resource_type: 'video'
+      });
+    }));
 
-  newCourse.save()
-    .then(() => res.redirect('/admin'))
-    .catch(err => res.status(500).send('Error saving course: ' + err));
+    const newCourse = new Course({
+      name,
+      timeRequired,
+      image: imageUpload.secure_url,
+      videos: videoUploads.map(v => v.secure_url)
+    });
+
+    await newCourse.save();
+    res.redirect('/admin');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('❌ Error saving course: ' + err.message);
+  }
 });
+
 
 // Admin - Delete a course
 app.post('/delete-course/:id', (req, res) => {
