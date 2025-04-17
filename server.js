@@ -154,21 +154,35 @@ app.get('/admincourse', (req, res) => {
 });
 
 // Admin - Add course POST
+
+
+// Route to handle the course creation (admin page)
 app.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
 ]), async (req, res) => {
-  if (!req.session.admin) return res.redirect('/adminlogin');
+  // Check if the user is logged in as admin
+  if (!req.session.admin) {
+    return res.redirect('/adminlogin');
+  }
 
   try {
-    const { name, timeRequired } = req.body;
+    // Log the incoming files for debugging purposes
+    console.log('Files received:', req.files);
 
+    const { name, timeRequired } = req.body; // Extract course details
+
+    // Handle image upload
     const imageUrl = await uploadToCloudinary(req.files['image'][0].buffer, 'courses/images', 'image');
+    console.log("Image uploaded to Cloudinary:", imageUrl);
 
+    // Handle video uploads
     const videoUrls = await Promise.all(req.files['videos'].map(file =>
       uploadToCloudinary(file.buffer, 'courses/videos', 'video')
     ));
+    console.log("Videos uploaded to Cloudinary:", videoUrls);
 
+    // Create new course entry
     const newCourse = new Course({
       name,
       timeRequired,
@@ -176,13 +190,16 @@ app.post('/admincourse', upload.fields([
       videos: videoUrls
     });
 
+    // Save the new course to the database
     await newCourse.save();
-    res.redirect('/admin');
+    res.redirect('/admin'); // Redirect to admin page after saving course
   } catch (err) {
-    console.error(err);
-    res.status(500).send('❌ Error saving course: ' + err.message);
+    // Log the error details
+    console.error("Error during course creation:", err);
+    res.status(500).send('❌ Error saving course: ' + err.message); // Send error message back to client
   }
 });
+
 
 // Delete Course
 app.post('/delete-course/:id', (req, res) => {
