@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const bcrypt = require('bcrypt'); // Add this at the top of your file
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -52,12 +52,20 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
-app.post('/register', (req, res) => {
+
+app.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
-  const newUser = new User({ name, email, password });
-  newUser.save()
-    .then(() => res.redirect('/login'))
-    .catch(err => res.send('Error saving user: ' + err));
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10); // 🔐 hash the password
+
+    const newUser = new User({ name, email, password: hashedPassword });
+
+    await newUser.save();
+    res.redirect('/login');
+  } catch (err) {
+    res.send('Error saving user: ' + err);
+  }
 });
 
 // Login
@@ -65,24 +73,29 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
+
+
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
+
   User.findOne({ email })
     .then(user => {
       if (!user) return res.send('Invalid email or password');
 
-      console.log('Entered:', password, 'Saved:', user.password); // DEBUG LINE
+      // Use bcrypt to compare entered password with hashed one
+      bcrypt.compare(password, user.password, (err, isMatch) => {
+        if (err) return res.send('Error during login');
+        if (!isMatch) return res.send('Invalid email or password');
 
-      if (user.password !== password) {
-        return res.send('Invalid email or password');
-      }
-
-      req.session.user = user;
-      req.session.userId = user._id;
-      res.redirect('/home');
+        // Password matched
+        req.session.user = user;
+        req.session.userId = user._id;
+        res.redirect('/home');
+      });
     })
     .catch(err => res.send('Error during login: ' + err));
 });
+
 
 // Home
 app.get('/home', (req, res) => {
