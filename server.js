@@ -53,20 +53,22 @@ app.get('/register', (req, res) => {
 });
 
 
-app.post('/register', async (req, res) => {
+app.post('/register', (req, res) => {
   const { name, email, password } = req.body;
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10); // 🔐 hash the password
+  bcrypt.hash(password, 10, (err, hashedPassword) => {
+    if (err) {
+      return res.send('Error hashing password');
+    }
 
     const newUser = new User({ name, email, password: hashedPassword });
-
-    await newUser.save();
-    res.redirect('/login');
-  } catch (err) {
-    res.send('Error saving user: ' + err);
-  }
+    
+    newUser.save()
+      .then(() => res.redirect('/login'))
+      .catch(err => res.send('Error saving user: ' + err));
+  });
 });
+
 
 // Login
 app.get('/login', (req, res) => {
@@ -80,8 +82,10 @@ app.post('/login', (req, res) => {
     .then(user => {
       if (!user) return res.send('Invalid email or password');
 
-      // Use the comparePassword method defined in the schema
-      user.comparePassword(password)
+      console.log('Entered password:', password);
+      console.log('Stored hashed password:', user.password); // Log the stored hashed password
+
+      user.comparePassword(password)  // This should compare the entered password with the hashed one
         .then(isMatch => {
           if (!isMatch) return res.send('Invalid email or password');
 
@@ -93,8 +97,16 @@ app.post('/login', (req, res) => {
     })
     .catch(err => res.send('Error during login: ' + err));
 });
+user.comparePassword(password)
+  .then(isMatch => {
+    console.log('Password match:', isMatch); // Add a log to check if the passwords match
+    if (!isMatch) return res.send('Invalid email or password');
 
-
+    req.session.user = user;
+    req.session.userId = user._id;
+    res.redirect('/home');
+  })
+  .catch(err => res.send('Error comparing passwords: ' + err));
 
 // Home
 app.get('/home', (req, res) => {
