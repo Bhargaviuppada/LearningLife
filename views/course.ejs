@@ -97,7 +97,9 @@
     <div class="course-list">
       <% courses.forEach(course => { %>
         <div class="course-item">
-          <img src="/uploads/<%= course.image %>" alt="<%= course.name %>">
+          <img src="<%= course.image %>" alt="<%= course.name %>">
+        
+
           <div class="course-details">
             <h3><%= course.name %></h3>
             <p><strong>Duration:</strong> <%= course.timeRequired %></p>
@@ -105,7 +107,7 @@
             <h4>Videos:</h4>
             <% course.videos.forEach(video => { %>
               <video controls>
-                <source src="/uploads/<%= video %>" type="video/mp4">
+                <source src="<%= video %>" type="video/mp4">
                 Your browser does not support the video tag.
               </video>
             <% }); %>
