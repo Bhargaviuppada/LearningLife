@@ -73,7 +73,6 @@ app.get('/login', (req, res) => {
   res.render('login');
 });
 
-
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -81,20 +80,20 @@ app.post('/login', (req, res) => {
     .then(user => {
       if (!user) return res.send('Invalid email or password');
 
-      console.log('Entered:', password, 'Saved:', user.password); // Debugging line
+      // Use the comparePassword method defined in the schema
+      user.comparePassword(password)
+        .then(isMatch => {
+          if (!isMatch) return res.send('Invalid email or password');
 
-      // Compare entered password with hashed password
-      bcrypt.compare(password, user.password, (err, isMatch) => {
-        if (err) return res.send('Error comparing passwords');
-        if (!isMatch) return res.send('Invalid email or password');
-
-        req.session.user = user;
-        req.session.userId = user._id;
-        res.redirect('/home');
-      });
+          req.session.user = user;
+          req.session.userId = user._id;
+          res.redirect('/home');
+        })
+        .catch(err => res.send('Error comparing passwords: ' + err));
     })
     .catch(err => res.send('Error during login: ' + err));
 });
+
 
 
 // Home
