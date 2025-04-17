@@ -5,20 +5,18 @@ const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const bcrypt = require('bcrypt');
-const streamifier = require('streamifier');
 
 const User = require('./models/user');
 const Course = require('./models/course');
-const { cloudinary } = require('./cloudinary'); // ✅ Use cloudinary.js
+const { cloudinary, storage } = require('./cloudinary'); // ✅ CloudinaryStorage used here
 
 const app = express();
 
-// View engine and static files
+// Setup
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Sessions
 app.use(session({
   secret: 'secretKey',
   resave: false,
@@ -30,29 +28,13 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Atlas connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Multer - Memory storage for custom upload
-const storage = multer.memoryStorage();
+// ✅ Multer using CloudinaryStorage
 const upload = multer({ storage });
 
-// Cloudinary upload helper
-const uploadToCloudinary = (fileBuffer, folder, resource_type = 'image') => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
-      }
-    );
-    streamifier.createReadStream(fileBuffer).pipe(stream);
-  });
-};
-
-// ---------- ROUTES ----------
+// ----------- ROUTES ------------
 
 app.get('/', (req, res) => res.redirect('/register'));
 
-// Register
 app.get('/register', (req, res) => res.render('register'));
 app.post('/register', (req, res) => {
   const { name, email, password } = req.body;
@@ -62,11 +44,9 @@ app.post('/register', (req, res) => {
     .catch(err => res.send('Error saving user: ' + err));
 });
 
-// Login
 app.get('/login', (req, res) => res.render('login'));
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-
   User.findOne({ email })
     .then(user => {
       if (!user) return res.send('Invalid email or password');
@@ -82,13 +62,11 @@ app.post('/login', (req, res) => {
     .catch(err => res.send('Error during login: ' + err));
 });
 
-// Home
 app.get('/home', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
   res.render('home', { user: req.session.user });
 });
 
-// Profile
 app.get('/profile', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
 
@@ -98,7 +76,6 @@ app.get('/profile', (req, res) => {
     .catch(err => res.status(500).send("Error loading user profile"));
 });
 
-// Admin login/logout
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin123' };
 
 app.get('/adminlogin', (req, res) => res.render('adminlogin'));
@@ -118,7 +95,6 @@ app.get('/adminlogout', (req, res) => {
   res.redirect('/adminlogin');
 });
 
-// Admin Dashboard
 app.get('/admin', (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
   Course.find()
@@ -126,13 +102,12 @@ app.get('/admin', (req, res) => {
     .catch(err => res.status(500).send('Error fetching courses'));
 });
 
-// Add Course Form
 app.get('/admincourse', (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
   res.render('admincourse');
 });
 
-// Handle course creation with uploads
+// ✅ Automatically uploads to Cloudinary using CloudinaryStorage
 app.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
@@ -142,15 +117,9 @@ app.post('/admincourse', upload.fields([
   try {
     const { name, timeRequired } = req.body;
 
-    // Upload image
-    const imageUrl = await uploadToCloudinary(req.files['image'][0].buffer, 'courses/images', 'image');
+    const imageUrl = req.files['image'][0].path;
+    const videoUrls = req.files['videos'].map(file => file.path);
 
-    // Upload videos
-    const videoUrls = await Promise.all(req.files['videos'].map(file =>
-      uploadToCloudinary(file.buffer, 'courses/videos', 'video')
-    ));
-
-    // Save course
     const newCourse = new Course({
       name,
       timeRequired,
@@ -161,12 +130,11 @@ app.post('/admincourse', upload.fields([
     await newCourse.save();
     res.redirect('/admin');
   } catch (err) {
-    console.error("Error during course creation:", err);
-    res.status(500).send('❌ Error saving course: ' + err.message);
+    console.error("Error saving course:", err);
+    res.status(500).send('Error saving course');
   }
 });
 
-// Delete course
 app.post('/delete-course/:id', (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
   Course.findByIdAndDelete(req.params.id)
@@ -174,14 +142,12 @@ app.post('/delete-course/:id', (req, res) => {
     .catch(err => res.status(500).send('Error deleting course'));
 });
 
-// View all courses
 app.get('/courses', (req, res) => {
   Course.find()
     .then(courses => res.render('course', { courses }))
     .catch(err => res.status(500).send('Error fetching courses'));
 });
 
-// Enroll in a course
 app.post('/enroll/:courseId', (req, res) => {
   const userId = req.session.userId;
   if (!userId) return res.redirect('/login');
@@ -199,7 +165,6 @@ app.post('/enroll/:courseId', (req, res) => {
     .catch(err => res.status(500).send("Error enrolling in course"));
 });
 
-// View enrolled courses
 app.get('/encourses', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
 
@@ -209,7 +174,6 @@ app.get('/encourses', (req, res) => {
     .catch(err => res.status(500).send("Error loading enrolled courses"));
 });
 
-// Start course (status update)
 app.post('/start-course/:courseId', (req, res) => {
   const userId = req.session.userId;
   if (!userId) return res.redirect('/login');
@@ -226,7 +190,6 @@ app.post('/start-course/:courseId', (req, res) => {
     .catch(err => res.status(500).send("Error starting course"));
 });
 
-// View course content
 app.get('/start-course/:courseId', async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
@@ -242,17 +205,16 @@ app.get('/start-course/:courseId', async (req, res) => {
   }
 });
 
-// Logout
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.render('logout');
   });
 });
 
-// Start server
 app.listen(3000, () => {
   console.log('🚀 Server running on http://localhost:3000');
 });
+
 
 
 
