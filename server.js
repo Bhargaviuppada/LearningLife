@@ -56,17 +56,11 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   const { name, email, password } = req.body;
 
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) {
-      return res.send('Error hashing password');
-    }
+  const newUser = new User({ name, email, password });
 
-    const newUser = new User({ name, email, password: hashedPassword });
-    
-    newUser.save()
-      .then(() => res.redirect('/login'))
-      .catch(err => res.send('Error saving user: ' + err));
-  });
+  newUser.save()
+    .then(() => res.redirect('/login'))
+    .catch(err => res.send('Error saving user: ' + err));
 });
 
 
