@@ -9,7 +9,8 @@ const fs = require('fs');
 const User = require('./models/user');
 const Course = require('./models/course');
 const cloudinary = require('cloudinary').v2; // Cloudinary integration
-require('dotenv').config();  // Load environment variables from .env
+const streamifier = require('streamifier');
+
 
 const app = express();
 
@@ -23,23 +24,38 @@ app.use(session({
   saveUninitialized: false
 }));
 
-// Cloudinary configuration
+const router = express.Router();
+
+// Cloudinary config 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME?.trim(),
-  api_key: process.env.CLOUDINARY_API_KEY?.trim(),
-  api_secret: process.env.CLOUDINARY_API_SECRET?.trim()
-});
-console.log("✅ Cloudinary configured as:", cloudinary.config().cloud_name);
-// Upload image
-const imageUpload = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
-  folder: "learningLife/images"
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Upload video
-const videoUpload = await cloudinary.uploader.upload(req.files.video.tempFilePath, {
-  folder: "learningLife/videos",
-  resource_type: "video"
-});
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage }).fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'videos', maxCount: 10 }
+]);
+
+// Helper to stream upload to Cloudinary
+const uploadToCloudinary = (fileBuffer, folder, resource_type = 'image') => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    streamifier.createReadStream(fileBuffer).pipe(stream);
+  });
+};
 
 
 // Connect to MongoDB Atlas using connection string from .env
@@ -164,14 +180,19 @@ app.get('/admincourse', (req, res) => {
   res.render('admincourse');
 });
 
-// Admin - Add course POST
-// Convert buffer to base64
-function bufferToBase64(buffer) {
-  return `data:image/jpeg;base64,${buffer.toString('base64')}`;
+
+// Helper function to upload to Cloudinary
+async function uploadToCloudinary(buffer, folder, resourceType) {
+  const base64 = `data:${resourceType};base64,${buffer.toString('base64')}`;
+  const result = await cloudinary.uploader.upload(base64, {
+    folder: folder,
+    resource_type: resourceType
+  });
+  return result.secure_url;
 }
 
 // Admin - Add course POST
-app.post('/admincourse', upload.fields([
+router.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
 ]), async (req, res) => {
@@ -181,39 +202,31 @@ app.post('/admincourse', upload.fields([
     const { name, timeRequired } = req.body;
 
     // Upload image to Cloudinary
-    const imageBase64 = bufferToBase64(req.files['image'][0].buffer);
-    const imageUpload = await cloudinary.uploader.upload(imageBase64, {
-      folder: 'courses/images',
-      resource_type: 'image'
-    });
+    const imageUrl = await uploadToCloudinary(req.files['image'][0].buffer, 'courses/images', 'image');
 
     // Upload videos to Cloudinary
-    const videoUploads = await Promise.all(req.files['videos'].map(file => {
-      const videoBase64 = `data:video/mp4;base64,${file.buffer.toString('base64')}`;
-      return cloudinary.uploader.upload(videoBase64, {
-        folder: 'courses/videos',
-        resource_type: 'video'
-      });
-    }));
+    const videoUrls = await Promise.all(req.files['videos'].map(file => 
+      uploadToCloudinary(file.buffer, 'courses/videos', 'video')
+    ));
 
+    // Save the course in DB
     const newCourse = new Course({
       name,
       timeRequired,
-      image: imageUpload.secure_url,
-      videos: videoUploads.map(v => v.secure_url)
+      image: imageUrl,
+      videos: videoUrls
     });
 
     await newCourse.save();
-    res.redirect('/admin');
+    res.redirect('/admin');  // or redirect to course listing page
   } catch (err) {
     console.error(err);
     res.status(500).send('❌ Error saving course: ' + err.message);
   }
 });
 
-
 // Admin - Delete a course
-app.post('/delete-course/:id', (req, res) => {
+router.post('/delete-course/:id', (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
 
   const courseId = req.params.id;
@@ -221,6 +234,9 @@ app.post('/delete-course/:id', (req, res) => {
     .then(() => res.redirect('/admin'))
     .catch(err => res.status(500).send('Error deleting course'));
 });
+
+module.exports = router;
+
 
 // ----------- USER SIDE ----------
 
