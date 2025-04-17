@@ -4,49 +4,33 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const bcrypt = require('bcrypt');
+const streamifier = require('streamifier');
+
 const User = require('./models/user');
 const Course = require('./models/course');
-const cloudinary = require('cloudinary').v2;
-const streamifier = require('streamifier');
+const { cloudinary } = require('./cloudinary'); // ✅ Use cloudinary.js
 
 const app = express();
 
-// Set up view engine and static files
+// View engine and static files
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session setup
+// Sessions
 app.use(session({
   secret: 'secretKey',
   resave: false,
   saveUninitialized: false
 }));
 
-// Cloudinary config
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-console.log('Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME);
-
-cloudinary.uploader.upload('image1.jpg', function(error, result) {
-  if (error) {
-    console.error('Error:', error);
-  } else {
-    console.log('Upload Result:', result);
-  }
-});
-
-// MongoDB connection
+// MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Atlas connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Multer config
+// Multer - Memory storage for custom upload
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -66,16 +50,10 @@ const uploadToCloudinary = (fileBuffer, folder, resource_type = 'image') => {
 
 // ---------- ROUTES ----------
 
-// Root route
-app.get('/', (req, res) => {
-  res.redirect('/register');
-});
+app.get('/', (req, res) => res.redirect('/register'));
 
 // Register
-app.get('/register', (req, res) => {
-  res.render('register');
-});
-
+app.get('/register', (req, res) => res.render('register'));
 app.post('/register', (req, res) => {
   const { name, email, password } = req.body;
   const newUser = new User({ name, email, password });
@@ -85,17 +63,13 @@ app.post('/register', (req, res) => {
 });
 
 // Login
-app.get('/login', (req, res) => {
-  res.render('login');
-});
-
+app.get('/login', (req, res) => res.render('login'));
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
   User.findOne({ email })
     .then(user => {
       if (!user) return res.send('Invalid email or password');
-
       user.comparePassword(password)
         .then(isMatch => {
           if (!isMatch) return res.send('Invalid email or password');
@@ -118,20 +92,16 @@ app.get('/home', (req, res) => {
 app.get('/profile', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
 
-  const userId = req.session.user._id;
-
-  User.findById(userId)
+  User.findById(req.session.user._id)
     .populate('enrolledCourses')
     .then(user => res.render('profile', { user }))
     .catch(err => res.status(500).send("Error loading user profile"));
 });
 
-// Admin Login
+// Admin login/logout
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin123' };
 
-app.get('/adminlogin', (req, res) => {
-  res.render('adminlogin');
-});
+app.get('/adminlogin', (req, res) => res.render('adminlogin'));
 
 app.post('/adminlogin', (req, res) => {
   const { username, password } = req.body;
@@ -162,36 +132,25 @@ app.get('/admincourse', (req, res) => {
   res.render('admincourse');
 });
 
-// Admin - Add course POST
-
-
-// Route to handle the course creation (admin page)
+// Handle course creation with uploads
 app.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
 ]), async (req, res) => {
-  // Check if the user is logged in as admin
-  if (!req.session.admin) {
-    return res.redirect('/adminlogin');
-  }
+  if (!req.session.admin) return res.redirect('/adminlogin');
 
   try {
-    // Log the incoming files for debugging purposes
-    console.log('Files received:', req.files);
+    const { name, timeRequired } = req.body;
 
-    const { name, timeRequired } = req.body; // Extract course details
-
-    // Handle image upload
+    // Upload image
     const imageUrl = await uploadToCloudinary(req.files['image'][0].buffer, 'courses/images', 'image');
-    console.log("Image uploaded to Cloudinary:", imageUrl);
 
-    // Handle video uploads
+    // Upload videos
     const videoUrls = await Promise.all(req.files['videos'].map(file =>
       uploadToCloudinary(file.buffer, 'courses/videos', 'video')
     ));
-    console.log("Videos uploaded to Cloudinary:", videoUrls);
 
-    // Create new course entry
+    // Save course
     const newCourse = new Course({
       name,
       timeRequired,
@@ -199,21 +158,17 @@ app.post('/admincourse', upload.fields([
       videos: videoUrls
     });
 
-    // Save the new course to the database
     await newCourse.save();
-    res.redirect('/admin'); // Redirect to admin page after saving course
+    res.redirect('/admin');
   } catch (err) {
-    // Log the error details
     console.error("Error during course creation:", err);
-    res.status(500).send('❌ Error saving course: ' + err.message); // Send error message back to client
+    res.status(500).send('❌ Error saving course: ' + err.message);
   }
 });
 
-
-// Delete Course
+// Delete course
 app.post('/delete-course/:id', (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
-
   Course.findByIdAndDelete(req.params.id)
     .then(() => res.redirect('/admin'))
     .catch(err => res.status(500).send('Error deleting course'));
@@ -276,7 +231,6 @@ app.get('/start-course/:courseId', async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
     if (!course) return res.status(404).send('Course not found');
-
     if (course.videos.length > 0) {
       res.render('start', { course });
     } else {
