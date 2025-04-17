@@ -5,10 +5,11 @@ const courseSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  timeRequired: {
-    type: Number,
-    required: true,
-  },
+ timeRequired: {
+  type: String,
+  required: true,
+},
+
   image: {
     type: String,
     required: true,
