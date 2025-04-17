@@ -8,15 +8,12 @@ cloudinary.config({
 });
 
 const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => {
-    const folder = file.mimetype.startsWith('video/') ? 'course_videos' : 'course_images';
-    return {
-      folder,
-      resource_type: file.mimetype.startsWith('video/') ? 'video' : 'image',
-      public_id: `${Date.now()}-${file.originalname}`
-    };
+  cloudinary: cloudinary,
+  params: {
+    folder: 'LearningLifeUploads',
+    allowed_formats: ['jpg', 'png', 'mp4']
   }
 });
 
 module.exports = { cloudinary, storage };
+
