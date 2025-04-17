@@ -31,6 +31,13 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
+cloudinary.uploader.upload('image1.jpg', function(error, result) {
+  if (error) {
+    console.error('Error:', error);
+  } else {
+    console.log('Upload Result:', result);
+  }
+});
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
