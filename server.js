@@ -69,9 +69,14 @@ app.post('/login', (req, res) => {
   const { email, password } = req.body;
   User.findOne({ email })
     .then(user => {
-      if (!user || user.password !== password) {
+      if (!user) return res.send('Invalid email or password');
+
+      console.log('Entered:', password, 'Saved:', user.password); // DEBUG LINE
+
+      if (user.password !== password) {
         return res.send('Invalid email or password');
       }
+
       req.session.user = user;
       req.session.userId = user._id;
       res.redirect('/home');
