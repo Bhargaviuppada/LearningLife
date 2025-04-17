@@ -8,6 +8,7 @@ const multer = require('multer');
 const fs = require('fs');
 const User = require('./models/user');
 const Course = require('./models/course');
+const cloudinary = require('cloudinary').v2; // Cloudinary integration
 require('dotenv').config();  // Load environment variables from .env
 
 const app = express();
@@ -22,24 +23,21 @@ app.use(session({
   saveUninitialized: false
 }));
 
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 // Connect to MongoDB Atlas using connection string from .env
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Atlas connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 
-// Multer setup for uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = path.join(__dirname, 'public', 'uploads');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + Date.now() + ext);
-  }
-});
+// Multer setup for uploads (only for files that aren't directly uploaded to Cloudinary)
+const storage = multer.memoryStorage(); // Store files in memory to upload to Cloudinary
 const upload = multer({ storage });
 
 // ---------- ROUTES ----------
@@ -145,18 +143,30 @@ app.get('/admincourse', (req, res) => {
 app.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
-]), (req, res) => {
+]), async (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
 
   const { name, timeRequired } = req.body;
-  const image = req.files['image']?.[0]?.filename || '';
-  const videos = (req.files['videos'] || []).map(file => file.filename);
+  
+  // Upload image to Cloudinary
+  const imageUpload = await cloudinary.uploader.upload(req.files['image'][0].buffer, {
+    folder: 'courses/images',
+    resource_type: 'image'
+  }).catch(err => res.status(500).send('Error uploading image: ' + err));
+
+  // Upload videos to Cloudinary
+  const videoUploads = await Promise.all(req.files['videos'].map(file =>
+    cloudinary.uploader.upload(file.buffer, {
+      folder: 'courses/videos',
+      resource_type: 'video'
+    })
+  )).catch(err => res.status(500).send('Error uploading videos: ' + err));
 
   const newCourse = new Course({
     name,
     timeRequired,
-    image,
-    videos
+    image: imageUpload?.secure_url,
+    videos: videoUploads.map(upload => upload.secure_url)
   });
 
   newCourse.save()
@@ -269,6 +279,7 @@ app.get('/logout', (req, res) => {
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
+
 
 
 
