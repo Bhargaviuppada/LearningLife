@@ -1,23 +1,23 @@
-const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinaryModule = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-cloudinary.config({
+cloudinaryModule.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
-console.log("Cloudinary uploader loaded:", cloudinary.uploader);
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary, // Make sure it's v2
+  cloudinary: cloudinaryModule,
   params: {
-    folder: "LearningLifeCourses",
-    allowed_formats: ["jpg", "png", "jpeg", "mp4"],
-  },
+    folder: 'courses', // or any folder name you want
+    allowedFormats: ['jpg', 'png', 'mp4', 'mov'],
+    resource_type: 'auto'
+  }
 });
 
 module.exports = {
-  cloudinary,
-  storage,
+  cloudinary: cloudinaryModule,
+  storage
 };
 
