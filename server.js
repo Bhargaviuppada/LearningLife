@@ -30,6 +30,16 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET?.trim()
 });
 console.log("✅ Cloudinary configured as:", cloudinary.config().cloud_name);
+// Upload image
+const imageUpload = await cloudinary.uploader.upload(req.files.image.tempFilePath, {
+  folder: "learningLife/images"
+});
+
+// Upload video
+const videoUpload = await cloudinary.uploader.upload(req.files.video.tempFilePath, {
+  folder: "learningLife/videos",
+  resource_type: "video"
+});
 
 
 // Connect to MongoDB Atlas using connection string from .env
