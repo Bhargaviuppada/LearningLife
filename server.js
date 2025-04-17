@@ -65,7 +65,6 @@ mongoose.connect(process.env.MONGO_URI)
 
 
 // Multer setup for uploads (only for files that aren't directly uploaded to Cloudinary)
-const storage = multer.memoryStorage(); // Store files in memory to upload to Cloudinary
 const upload = multer({ storage });
 
 // ---------- ROUTES ----------
