@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt'); // Add this at the top of your file
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const storage = multer.memoryStorage(); // Store files in memory to upload to Cloudinary
+
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -33,8 +35,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-
-const storage = multer.memoryStorage();
 const upload = multer({ storage }).fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
