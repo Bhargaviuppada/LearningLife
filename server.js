@@ -1,53 +1,51 @@
 require('dotenv').config();
-const bcrypt = require('bcrypt'); // Add this at the top of your file
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const storage = multer.memoryStorage(); // Store files in memory to upload to Cloudinary
-
-const path = require('path');
 const multer = require('multer');
+const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
 const User = require('./models/user');
 const Course = require('./models/course');
-const cloudinary = require('cloudinary').v2; // Cloudinary integration
+const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
-
 
 const app = express();
 
-// Middleware
+// Set up view engine and static files
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Session setup
 app.use(session({
   secret: 'secretKey',
   resave: false,
   saveUninitialized: false
 }));
 
-const router = express.Router();
-
-// Cloudinary config 
+// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const upload = multer({ storage }).fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'videos', maxCount: 10 }
-]);
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB Atlas connected'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Helper to stream upload to Cloudinary
+// Multer config
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Cloudinary upload helper
 const uploadToCloudinary = (fileBuffer, folder, resource_type = 'image') => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type,
-      },
+      { folder, resource_type },
       (error, result) => {
         if (error) return reject(error);
         resolve(result.secure_url);
@@ -56,16 +54,6 @@ const uploadToCloudinary = (fileBuffer, folder, resource_type = 'image') => {
     streamifier.createReadStream(fileBuffer).pipe(stream);
   });
 };
-
-
-// Connect to MongoDB Atlas using connection string from .env
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Atlas connected'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
-
-
-// Multer setup for uploads (only for files that aren't directly uploaded to Cloudinary)
-
 
 // ---------- ROUTES ----------
 
@@ -79,17 +67,13 @@ app.get('/register', (req, res) => {
   res.render('register');
 });
 
-
 app.post('/register', (req, res) => {
   const { name, email, password } = req.body;
-
   const newUser = new User({ name, email, password });
-
   newUser.save()
     .then(() => res.redirect('/login'))
     .catch(err => res.send('Error saving user: ' + err));
 });
-
 
 // Login
 app.get('/login', (req, res) => {
@@ -103,13 +87,9 @@ app.post('/login', (req, res) => {
     .then(user => {
       if (!user) return res.send('Invalid email or password');
 
-      console.log('Entered password:', password);
-      console.log('Stored hashed password:', user.password); // Log the stored hashed password
-
-      user.comparePassword(password)  // This should compare the entered password with the hashed one
+      user.comparePassword(password)
         .then(isMatch => {
           if (!isMatch) return res.send('Invalid email or password');
-
           req.session.user = user;
           req.session.userId = user._id;
           res.redirect('/home');
@@ -131,16 +111,10 @@ app.get('/profile', (req, res) => {
 
   const userId = req.session.user._id;
 
-  // Populate the enrolledCourses with course details
   User.findById(userId)
-    .populate('enrolledCourses') // Populate the entire enrolledCourses array with Course details
-    .then(user => {
-      res.render('profile', { user });
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).send("Error loading user profile");
-    });
+    .populate('enrolledCourses')
+    .then(user => res.render('profile', { user }))
+    .catch(err => res.status(500).send("Error loading user profile"));
 });
 
 // Admin Login
@@ -173,25 +147,14 @@ app.get('/admin', (req, res) => {
     .catch(err => res.status(500).send('Error fetching courses'));
 });
 
-// Admin - Add course form
+// Add Course Form
 app.get('/admincourse', (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
   res.render('admincourse');
 });
 
-
-// Helper function to upload to Cloudinary
-async function uploadToCloudinary(buffer, folder, resourceType) {
-  const base64 = `data:${resourceType};base64,${buffer.toString('base64')}`;
-  const result = await cloudinary.uploader.upload(base64, {
-    folder: folder,
-    resource_type: resourceType
-  });
-  return result.secure_url;
-}
-
 // Admin - Add course POST
-router.post('/admincourse', upload.fields([
+app.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
 ]), async (req, res) => {
@@ -200,15 +163,12 @@ router.post('/admincourse', upload.fields([
   try {
     const { name, timeRequired } = req.body;
 
-    // Upload image to Cloudinary
     const imageUrl = await uploadToCloudinary(req.files['image'][0].buffer, 'courses/images', 'image');
 
-    // Upload videos to Cloudinary
-    const videoUrls = await Promise.all(req.files['videos'].map(file => 
+    const videoUrls = await Promise.all(req.files['videos'].map(file =>
       uploadToCloudinary(file.buffer, 'courses/videos', 'video')
     ));
 
-    // Save the course in DB
     const newCourse = new Course({
       name,
       timeRequired,
@@ -217,51 +177,41 @@ router.post('/admincourse', upload.fields([
     });
 
     await newCourse.save();
-    res.redirect('/admin');  // or redirect to course listing page
+    res.redirect('/admin');
   } catch (err) {
     console.error(err);
     res.status(500).send('❌ Error saving course: ' + err.message);
   }
 });
 
-// Admin - Delete a course
-router.post('/delete-course/:id', (req, res) => {
+// Delete Course
+app.post('/delete-course/:id', (req, res) => {
   if (!req.session.admin) return res.redirect('/adminlogin');
 
-  const courseId = req.params.id;
-  Course.findByIdAndDelete(courseId)
+  Course.findByIdAndDelete(req.params.id)
     .then(() => res.redirect('/admin'))
     .catch(err => res.status(500).send('Error deleting course'));
 });
 
-module.exports = router;
-
-
-// ----------- USER SIDE ----------
-
-// View available courses
+// View all courses
 app.get('/courses', (req, res) => {
   Course.find()
-    .then(courses => {
-      res.render('course', { courses });
-    })
+    .then(courses => res.render('course', { courses }))
     .catch(err => res.status(500).send('Error fetching courses'));
 });
 
 // Enroll in a course
 app.post('/enroll/:courseId', (req, res) => {
-  const courseId = req.params.courseId;
   const userId = req.session.userId;
-
   if (!userId) return res.redirect('/login');
 
   User.findById(userId)
     .then(user => {
-      if (!user.enrolledCourses.includes(courseId)) {
-        user.enrolledCourses.push({ _id: courseId, status: 'Not Started' });
+      if (!user.enrolledCourses.includes(req.params.courseId)) {
+        user.enrolledCourses.push({ _id: req.params.courseId, status: 'Not Started' });
         return user.save();
       } else {
-        return Promise.resolve(); // Already enrolled
+        return Promise.resolve();
       }
     })
     .then(() => res.redirect('/encourses'))
@@ -271,29 +221,21 @@ app.post('/enroll/:courseId', (req, res) => {
 // View enrolled courses
 app.get('/encourses', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
-  
-  const userId = req.session.user._id;
 
-  User.findById(userId)
-    .populate('enrolledCourses') // This needs to match your schema
-    .then(user => {
-      res.render('encourses', { enrolledCourses: user.enrolledCourses });
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).send("Error loading enrolled courses");
-    });
+  User.findById(req.session.user._id)
+    .populate('enrolledCourses')
+    .then(user => res.render('encourses', { enrolledCourses: user.enrolledCourses }))
+    .catch(err => res.status(500).send("Error loading enrolled courses"));
 });
 
-// Start course
+// Start course (status update)
 app.post('/start-course/:courseId', (req, res) => {
-  const courseId = req.params.courseId;
   const userId = req.session.userId;
   if (!userId) return res.redirect('/login');
 
   User.findById(userId)
     .then(user => {
-      const enrolled = user.enrolledCourses.find(c => c._id.toString() === courseId);
+      const enrolled = user.enrolledCourses.find(c => c._id.toString() === req.params.courseId);
       if (enrolled) {
         enrolled.status = 'In Progress';
         return user.save();
@@ -303,13 +245,11 @@ app.post('/start-course/:courseId', (req, res) => {
     .catch(err => res.status(500).send("Error starting course"));
 });
 
-// View course
+// View course content
 app.get('/start-course/:courseId', async (req, res) => {
   try {
     const course = await Course.findById(req.params.courseId);
-    if (!course) {
-      return res.status(404).send('Course not found');
-    }
+    if (!course) return res.status(404).send('Course not found');
 
     if (course.videos.length > 0) {
       res.render('start', { course });
@@ -322,15 +262,16 @@ app.get('/start-course/:courseId', async (req, res) => {
   }
 });
 
+// Logout
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
-    res.render('logout'); // Renders logout.ejs
+    res.render('logout');
   });
 });
 
-// Start the server
+// Start server
 app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+  console.log('🚀 Server running on http://localhost:3000');
 });
 
 
