@@ -1,14 +1,14 @@
-require('dotenv').config();
+require('dotenv').config(); // Ensure dotenv is loaded at the start
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const { cloudinary, storage } = require('./cloudinary'); // Cloudinary config and storage
 
 const User = require('./models/user');
 const Course = require('./models/course');
-const { cloudinary, storage } = require('./cloudinary'); // ✅ CloudinaryStorage used here
 
 const app = express();
 
@@ -28,7 +28,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Atlas connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ Multer using CloudinaryStorage
+// Multer with Cloudinary Storage
 const upload = multer({ storage });
 
 // ----------- ROUTES ------------
@@ -107,7 +107,7 @@ app.get('/admincourse', (req, res) => {
   res.render('admincourse');
 });
 
-// ✅ Automatically uploads to Cloudinary using CloudinaryStorage
+// POST route for adding a course
 app.post('/admincourse', upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'videos', maxCount: 10 }
@@ -117,6 +117,7 @@ app.post('/admincourse', upload.fields([
   try {
     const { name, timeRequired } = req.body;
 
+    // Fetch image and video URLs from Cloudinary
     const imageUrl = req.files['image'][0].path;
     const videoUrls = req.files['videos'].map(file => file.path);
 
@@ -214,10 +215,6 @@ app.get('/logout', (req, res) => {
 app.listen(3000, () => {
   console.log('🚀 Server running on http://localhost:3000');
 });
-
-
-
-
 
 
 
