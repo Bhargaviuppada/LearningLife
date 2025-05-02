@@ -1,5 +1,5 @@
 {
-  "name": "onlinelearing",
+  "name": "onlinelearning",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -12,15 +12,16 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
-    "bcryptjs": "^3.0.2",
-     "dotenv": "^16.4.5",
+    "bcryptjs": "^2.4.3",  // downgraded to a stable version for compatibility
+    "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
-    "express": "^5.1.0",
+    "express": "^4.18.2",  // reverted to a more stable version of express
     "express-session": "^1.18.1",
-    "mongoose": "^8.13.2",
+    "mongoose": "^6.9.1",  // reverted to a stable version of mongoose
     "multer": "^1.4.5-lts.2",
     "multer-storage-cloudinary": "^3.0.0",
     "cloudinary": "^1.30.0",
-    "streamifier": "^0.1.1" 
+    "streamifier": "^0.1.1"
   }
 }
+
